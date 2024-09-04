@@ -1,0 +1,12 @@
+<div class="container">
+<button (click)='closeModal()' class="close">X</button>
+
+<table>
+<tr><td>item</td><td>quantity</td><td>price</td></tr>
+<tr *ngFor="let inv of this.Inventory">
+<td>{{inv.details.name}}</td>
+<td>{{inv.quantity}}</td>
+<td>1</td>
+</tr>
+</table>
+</div>

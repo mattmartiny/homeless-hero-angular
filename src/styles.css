@@ -1,0 +1,27 @@
+/* You can add global styles to this file, and also import other style files */
+@import "~bootstrap/dist/css/bootstrap.css";
+
+
+
+html, body{
+	overflow:hidden;
+}
+
+
+
+
+#warning-message { display: none; }
+
+    @media only screen and (orientation:portrait){
+
+        #wrapper { display:none; }
+
+        #warning-message { display:block; color:red;text-align: center;margin-top:15em;}
+
+    }
+
+    @media only screen and (orientation:landscape){
+
+        #warning-message { display:none; }
+
+    }

@@ -1,0 +1,619 @@
+<div class="col-sm-12">
+  <div class="row">
+    <div class="navigateWorld col-sm-4">
+      <div class="currentLocation">
+        Location: {{ currentLocation.name }}<br />
+        <span style="font-weight: bold">{{ currentLocation.description }}</span>
+
+        <br />
+        <span
+          *ngIf="
+            currentDungeon.insideDungeon &&
+            currentLocation.dungeonThatsHere != undefined
+          "
+          >Sub-Location: {{ currentLocation.dungeonThatsHere.name }}</span
+        >
+        <!-- {{currentDungeonRoom.roomID}} -->
+      </div>
+
+      <button [disabled]="canFight == false" (click)="fight()" class="fight">
+        Fight
+      </button>
+      <button
+        *ngIf="currentLocation.shop == true"
+        (click)="Shop()"
+        class="shop"
+      >
+        Shop
+      </button>
+      <button
+        *ngIf="currentLocation.id == 1023 || currentLocation.id == 1025"
+        (click)="Gamble()"
+        class="shop"
+      >
+        Gamble
+      </button>
+      <button (click)="data()" class="status">Status</button>
+
+      <div class="optionBox">
+        <button
+          [disabled]="currentLocation.NPC == false"
+          *ngIf="currentLocation.NPC == true"
+          (click)="Talk(currentLocation.NPCHere)"
+          class="chat"
+        >
+          Chat
+        </button>
+        <button
+          [disabled]="!currentDungeonRoom.NPCHere"
+          *ngIf="currentDungeonRoom.NPCHere != undefined"
+          (click)="Talk(currentDungeonRoom.NPCHere)"
+          class="chat"
+        >
+          Chat
+        </button>
+
+        <button
+          [disabled]="!currentLocation.dungeonHere"
+          *ngIf="
+            currentLocation.dungeonThatsHere != undefined &&
+            currentDungeon.insideDungeon == false
+          "
+          (click)="
+            enterDungeon(currentLocation.dungeonThatsHere, currentLocation)
+          "
+          class="proceedDungeon"
+        >
+          Enter
+        </button>
+        <button
+          [disabled]="!currentLocation.dungeonHere"
+          *ngIf="
+            currentLocation.dungeonThatsHere != undefined &&
+            currentDungeon.insideDungeon == true &&
+            currentDungeonRoom.exit == true
+          "
+          (click)="exitDungeon(currentDungeonRoom)"
+          class="proceedDungeon"
+        >
+          Exit
+        </button>
+      </div>
+
+      <div>
+        <button
+          (click)="stairsUp(currentDungeonRoom)"
+          *ngIf="
+            currentLocation.dungeonThatsHere != undefined &&
+            currentDungeonRoom.toStairsUp != undefined
+          "
+          [disabled]="currentDungeonRoom.toStairsUp == undefined"
+          class="upDungeon"
+        >
+          Up
+        </button>
+        <button
+          (click)="stairsDown(currentDungeonRoom)"
+          *ngIf="
+            currentLocation.dungeonThatsHere != undefined &&
+            currentDungeonRoom.toStairsDown != undefined
+          "
+          [disabled]="currentDungeonRoom.toStairsDown == undefined"
+          class="downDungeon"
+        >
+          Down
+        </button>
+      </div>
+
+      <div class="directions" *ngIf="!currentDungeon.insideDungeon">
+        <button
+          (click)="MoveNorth()"
+          [disabled]="currentLocation.toTheNorth == undefined"
+          class="north"
+        >
+          &#8593;</button
+        ><br />
+        <button
+          (click)="MoveWest()"
+          [disabled]="currentLocation.toTheWest == undefined"
+          class="west"
+        >
+          &#8592;</button
+        ><button
+          (click)="MoveEast()"
+          [disabled]="currentLocation.toTheEast == undefined"
+          class="east"
+        >
+          &#8594;
+        </button>
+        <br /><button
+          (click)="MoveSouth()"
+          [disabled]="currentLocation.toTheSouth == undefined"
+          class="south"
+        >
+          &#8595;
+        </button>
+      </div>
+
+      <div class="directions" *ngIf="currentDungeon.insideDungeon">
+        <button
+          (click)="MoveNorthDung(currentDungeonRoom)"
+          [disabled]="currentDungeonRoom.toTheNorth == undefined"
+          class="north"
+        >
+          &#8593;</button
+        ><br />
+        <button
+          (click)="MoveWestDung(currentDungeonRoom)"
+          [disabled]="currentDungeonRoom.toTheWest == undefined"
+          class="west"
+        >
+          &#8592;</button
+        ><button
+          (click)="MoveEastDung(currentDungeonRoom)"
+          [disabled]="currentDungeonRoom.toTheEast == undefined"
+          class="east"
+        >
+          &#8594;
+        </button>
+        <br /><button
+          (click)="MoveSouthDung(currentDungeonRoom)"
+          [disabled]="currentDungeonRoom.toTheSouth == undefined"
+          class="south"
+        >
+          &#8595;
+        </button>
+      </div>
+      <!-- <div>
+
+    <button (click)='"stairsUp(currentDungeonRoom)"  *ngIf="currentLocation.dungeonThatsHere != undefined && currentDungeonRoom.toStairsUp != undefined"  [disabled]="currentDungeonRoom.toStairsUp == undefined">Up</button>
+    <button (click)="stairsDown(currentDungeonRoom)"  *ngIf="currentLocation.dungeonThatsHere != undefined && currentDungeonRoom.toStairsDown != undefined"[disabled]="currentDungeonRoom.toStairsDown == undefined">Down</button>
+</div> -->
+    </div>
+    <div class="battleSection col-sm-4">
+      <img
+        src="../../assets/Locations/{{ currentLocation.imgPath }}.png"
+        class="locationImg"
+        alt="{{ currentLocation.description }}"
+      />
+
+      <div *ngIf="currentLocation.NPC === true">
+        <img
+          src="../../assets/other/npc.png"
+          class="npcImg"
+          alt="{{ currentLocation.NPCHere.name }}"
+        />
+      </div>
+      <div *ngIf="currentDungeonRoom.NPCHere != undefined">
+        <img
+          src="../../assets/other/npc.png"
+          class="npcImg"
+          alt="{{ currentDungeonRoom.NPCHere.name }}"
+        />
+      </div>
+
+      <div *ngIf="tooltipShown" class="popup-content">
+        <p *ngIf="myOpponent.id !== 0">{{ myOpponent.description }}</p>
+        <p *ngIf="myfluctuatingOpponent.id !== 0">
+          {{ myfluctuatingOpponent.description }}
+        </p>
+      </div>
+      <div *ngIf="currentLocation.hasEnemy == true">
+        <img
+          src="../../assets/Enemies/{{
+            currentLocation.EnemyHere[0].imgPath
+          }}.png"
+          class="enemyImg"
+          (click)="toggleTooltip()"
+          title="{{ currentLocation.EnemyHere[0].description }}"
+        />
+      </div>
+      <div *ngIf="myfluctuatingOpponent.id !== 0">
+        <img
+          src="../../assets/Enemies//{{ myfluctuatingOpponent.imgPath }}.png"
+          class="enemyImg"
+          (click)="toggleTooltip()"
+          title="{{ myfluctuatingOpponent.description }}"
+        />
+      </div>
+
+      <div class="opponentStats" *ngIf="currentLocation.hasEnemy">
+        <span
+          *ngIf="
+            currentLocation.EnemyHere[0].currentHp != 0 &&
+            !currentLocation.EnemyHere[0].fluctuating
+          "
+          ><b>{{ currentLocation.EnemyHere[0].name }}</b> <br />Health:
+          {{ currentLocation.EnemyHere[0].currentHp }}/{{
+            currentLocation.EnemyHere[0].maxHp
+          }}</span
+        >
+
+        <span *ngIf="myfluctuatingOpponent.currentHp != 0"
+          ><b>{{ myfluctuatingOpponent.name }}</b> <br />Health:
+          {{ myfluctuatingOpponent.currentHp }}/{{
+            myfluctuatingOpponent.maxHp
+          }}</span
+        >
+      </div>
+      <!-- [disabled]="currentLocation.EnemyHere === undefined  ||  currentDungeonRoom.EnemyHere === undefined" -->
+      <!-- <button [disabled]="canFight== false" (click)="fight()" class="fight">Fight</button>
+   <button *ngIf="currentLocation.shopHere != undefined"   (click)="Shop()" class="shop">Shop</button>
+    <div class="optionBox">
+
+
+    <button [disabled]="!currentLocation.NPCHere" *ngIf="currentLocation.NPCHere != undefined" (click)="Talk(currentLocation.NPCHere)" class="chat">Chat</button>
+    <button [disabled]="!currentDungeonRoom.NPCHere" *ngIf="currentDungeonRoom.NPCHere != undefined" (click)="Talk(currentDungeonRoom.NPCHere)" class="chat">Chat</button>
+
+    <button [disabled]="!currentLocation.dungeonHere" *ngIf="currentLocation.dungeonThatsHere != undefined && currentDungeon.insideDungeon == false" (click)="enterDungeon(currentLocation.dungeonThatsHere, currentLocation)" class="proceedDungeon">Enter</button>
+    <button [disabled]="!currentLocation.dungeonHere" *ngIf="currentLocation.dungeonThatsHere != undefined && currentDungeon.insideDungeon == true && currentDungeonRoom.exit == true" (click)="exitDungeon(currentDungeonRoom)" class="proceedDungeon">Exit</button>
+
+    
+    </div> -->
+
+      <div class="col-sm-12 dialog">
+        <div
+          *ngIf="currentLocation.NPC == true"
+          class="playerDialog"
+          style="background-color: rgba(255, 255, 255, 0.7)"
+        >
+          <b>{{ npcName }}</b
+          ><br />
+          {{ NPCDialog }}
+          <br />
+          <div
+            [hidden]="currentLocation.NPCHere.optionPerson == false"
+            class="col-sm-12"
+          >
+            <span
+              (click)="accept(currentLocation.NPCHere)"
+              class="option accept"
+              >{{ playerOption1 }}</span
+            ><span
+              (click)="decline(currentLocation.NPCHere)"
+              class="option decline"
+              >{{ EndChatMessage }}</span
+            >
+          </div>
+        </div>
+        <div
+          *ngIf="currentDungeonRoom.NPCHere != undefined"
+          class="playerDialog"
+          style="background-color: rgba(255, 255, 255, 0.7)"
+        >
+          <b>{{ npcName }}</b
+          ><br />
+          {{ NPCDialog }}
+          <br />
+          <div
+            [hidden]="currentDungeonRoom.NPCHere.optionPerson == false"
+            class="options"
+          >
+            <span
+              (click)="accept(currentDungeonRoom.NPCHere)"
+              class="option accept"
+              >{{ playerOption1 }}</span
+            ><span
+              (click)="decline(currentDungeonRoom.NPCHere)"
+              class="option decline"
+              >{{ EndChatMessage }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="storyOptions"></div>
+    </div>
+    <div class="col-sm-4">
+      <div class="playerStats">
+        <table style="width: 100%">
+          <tr>
+            <td>Health:</td>
+            <td style="text-align: right">
+              <span
+                [style.color]="
+                  myPlayer.stats.currentHp >= myPlayer.stats.MaxHp / 3
+                    ? 'black'
+                    : 'red'
+                "
+                >{{ myPlayer.stats.currentHp }}/{{ myPlayer.stats.MaxHp }}</span
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>Level:</td>
+            <td style="text-align: right">{{ myPlayer.stats.level }}</td>
+          </tr>
+          <tr>
+            <td>Weapon:</td>
+            <td style="text-align: right">{{ myPlayer.weapon?.itemName }}</td>
+          </tr>
+          <tr>
+            <td>Equipped:</td>
+            <td style="text-align: right">
+              {{ myPlayer.wearable?.itemName }}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="bmessage" #container id="bmessage">
+        <div
+          *ngIf="battleMessage"
+          [innerHTML]="sanitizer.bypassSecurityTrustHtml(battleMessage)"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="dataOpen" class="dataWindow">
+    <div class="col-sm-12" style="text-align: center">
+      Status Window
+      <div
+        id="data"
+        (click)="data()"
+        style="cursor: pointer; float: right; width: 10px; margin: 3px 10px"
+      >
+        X
+      </div>
+    </div>
+
+    <div class="playerStats2 col-sm-4">
+      <table style="width: 80%">
+        <tr>
+          <td>Health:</td>
+          <td style="text-align: right">
+            <span
+              [style.color]="
+                myPlayer.stats.currentHp >= myPlayer.stats.MaxHp / 3
+                  ? 'black'
+                  : 'red'
+              "
+              >{{ myPlayer.stats.currentHp }}/{{ myPlayer.stats.MaxHp }}</span
+            >
+          </td>
+        </tr>
+        <tr>
+          <td>Attack:</td>
+          <td style="text-align: right">{{ myPlayer.stats.attack }}</td>
+        </tr>
+        <tr>
+          <td>Defense:</td>
+          <td style="text-align: right">{{ myPlayer.stats.defense }}</td>
+        </tr>
+        <tr>
+          <td>Speed:</td>
+          <td style="text-align: right">{{ myPlayer.stats.speed }}</td>
+        </tr>
+        <tr>
+          <td>Level:</td>
+          <td style="text-align: right">{{ myPlayer.stats.level }}</td>
+        </tr>
+        <tr>
+          <td>Exp. Points:</td>
+          <td style="text-align: right">
+            {{ myPlayer.stats.experiencePoints }}
+          </td>
+        </tr>
+        <tr>
+          <td>Gold:</td>
+          <td style="text-align: right">{{ myPlayer.stats.gold }}</td>
+        </tr>
+        <tr>
+          <td>Death Count:</td>
+          <td style="text-align: right">{{ myPlayer.stats.deathCount }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="inventory col-sm-4" id="inventory">
+      <h3>INVENTORY</h3>
+      <table class="invTable">
+        <tr
+          *ngFor="let inv of myPlayer.inventory"
+          style="border: 0.5px solid black; max-height: 1.25em"
+        >
+          <td *ngIf="inv.quantity > 0" class="itemName">
+            <div *ngIf="selectedItem === inv" class="popup-content2">
+              <p *ngIf="inv.quantity > 0 && inv.details.equippable === true">
+                Attack Bonus: {{ inv.details.equippableStats?.attackBonus }},
+                Defense Bonus: {{ inv.details.equippableStats?.defenseBonus }},
+                Speed Bonus:
+                {{ inv.details.equippableStats?.speedBonus }}
+              </p>
+              <p *ngIf="inv.quantity > 0 && inv.details.wearable === true">
+                Attack Bonus: {{ inv.details.wearableStats?.attackBonus }},
+                Defense Bonus: {{ inv.details.wearableStats?.defenseBonus }},
+                Speed Bonus: {{ inv.details.wearableStats?.speedBonus }}
+              </p>
+              <p *ngIf="inv.quantity > 0 && inv.details.healing === true">
+                Heals {{ inv.details.healingStats?.amountHealed }} HP
+              </p>
+            </div>
+            <span (click)="toggleTooltip2(inv)">{{ inv.details.name }}</span>
+          </td>
+          <td *ngIf="inv.quantity > 0" class="inven">{{ inv.quantity }}</td>
+          <td>
+            <button
+              *ngIf="inv.details.healing == true && inv.quantity > 0"
+              (click)="heal(inv)"
+              class="invBtn"
+            >
+              Heal
+            </button>
+            <button
+              *ngIf="inv.details.equippable == true && inv.quantity > 0"
+              [disabled]="myPlayer.weapon?.equipped"
+              [hidden]="inv.details.equippableStats?.equipped"
+              (click)="Equip(inv)"
+              class="invBtn"
+            >
+              Equip
+            </button>
+            <button
+              *ngIf="inv.details.equippable == true && inv.quantity > 0"
+              [disabled]="!myPlayer.weapon?.equipped"
+              [hidden]="!inv.details.equippableStats?.equipped"
+              (click)="unequip(inv)"
+              class="invBtn"
+            >
+              Unequip
+            </button>
+            <button
+              *ngIf="inv.details.wearable == true && inv.quantity > 0"
+              [disabled]="myPlayer.wearable?.equipped"
+              [hidden]="inv.details.wearableStats?.equipped"
+              (click)="Wear(inv)"
+              class="invBtn"
+            >
+              Wear
+            </button>
+            <button
+              *ngIf="inv.details.wearable == true && inv.quantity > 0"
+              [disabled]="!myPlayer.wearable?.equipped"
+              [hidden]="!inv.details.wearableStats?.equipped"
+              (click)="removeItem(inv)"
+              class="invBtn"
+            >
+              Remove
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="quests col-sm-4" id="quests">
+      <h3>QUESTS</h3>
+      <div>
+        <ul *ngFor="let qus of myPlayer.questList">
+          <div *ngIf="qus.isComplete" style="text-decoration: line-through">
+            <li>{{ qus.details.name }}</li>
+            <ul *ngFor="let ci of qus.details.questCompletionItem">
+              <li>
+                {{ ci.details.details.name }} -- {{ ci.details.quantity }}
+              </li>
+            </ul>
+          </div>
+          <div *ngIf="!qus.isComplete">
+            <li style="font-weight: bolder">{{ qus.details.name }}</li>
+            <ul *ngFor="let ci of qus.details.questCompletionItem">
+              <li>
+                {{ ci.details.details.name }} -- {{ ci.details.quantity }}
+              </li>
+            </ul>
+          </div>
+          <hr />
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="shopOpen" class="shopWindow">
+    <div class="col-sm-12" style="text-align: center">
+      {{ currentLocation.shopHere?.shopName }}
+      <div
+        id="shop"
+        (click)="Shop()"
+        style="cursor: pointer; float: right; width: 10px; margin: 3px 10px"
+      >
+        X
+      </div>
+    </div>
+
+    <div>Gold: {{ myPlayer.stats.gold }}</div>
+    <br />
+    <div>My Inventory</div>
+    <table class="shopItems">
+      <tr style="font-weight: bold">
+        <td>Item</td>
+        <td>Quantity</td>
+        <td>Sell Price</td>
+        <td></td>
+      </tr>
+      <tr *ngFor="let inv of myPlayer.inventory">
+        <td *ngIf="inv.quantity > 0">{{ inv.details.name }}</td>
+        <td *ngIf="inv.quantity > 0">{{ inv.quantity }}</td>
+        <td *ngIf="inv.quantity > 0">
+          {{ inv.details.price / 1.5 | number : "1.0-0" }}
+        </td>
+        <td *ngIf="inv.quantity > 0 && inv.details.price != 0">
+          <button (click)="sellItem(inv)">Sell</button>
+        </td>
+      </tr>
+    </table>
+
+    <div>
+      <table class="shopItems">
+        <tr>
+          <td>Item</td>
+          <td>Buy Price</td>
+          <td></td>
+        </tr>
+        <tr *ngFor="let si of currentLocation.shopHere?.shopInventory">
+          <td>{{ si.name }}</td>
+          <td>{{ si.price }}</td>
+          <td><button (click)="buyItem(si)">Buy</button></td>
+        </tr>
+      </table>
+
+      <div [innerHTML]="shopMessage"></div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="casinoOpen" class="shopWindow">
+  <div
+    id="shop"
+    (click)="Gamble()"
+    style="cursor: pointer; float: right; width: 10px; margin: 3px 10px"
+  >
+    X
+  </div>
+  {{ myPlayer.stats.gold }} in Gold
+
+  <form
+    (submit)="handleSubmit()"
+    style="width: 100%; text-align: center; margin: 0 auto"
+  >
+    Pick a number:<br />&nbsp;
+    <input
+      type="radio"
+      name="choice"
+      [(ngModel)]="playerChoice"
+      value="1"
+    />&nbsp; <label>1</label>&nbsp;
+    <input
+      type="radio"
+      name="choice"
+      [(ngModel)]="playerChoice"
+      value="2"
+    />&nbsp; <label>2</label>&nbsp;
+    <input
+      type="radio"
+      name="choice"
+      [(ngModel)]="playerChoice"
+      value="3"
+    />&nbsp; <label>3</label>&nbsp;<br /><br />
+
+    <br /><br />
+    <label for="bet">Bet amount: &nbsp;</label>
+    <input
+      type="number"
+      id="bet"
+      name="bet"
+      [(ngModel)]="betAmount"
+      min="0"
+      step="1"
+    /><br /><br />
+    <button type="submit" [disabled]="myPlayer.stats.gold < betAmount">
+      Submit
+    </button>
+  </form>
+  <div id="result">{{ result }}</div>
+</div>
+
+<script type="text/javascript">
+  $(function () {
+    $("#quests").accordion({ collapsible: true });
+  });
+</script>
